@@ -1,0 +1,28 @@
+<?php
+// Configuración de la base de datos
+$servername = 'localhost';
+$username = 'csi84990_sigem';
+$password = 'N2$nsntl5k$0';
+$dbname = 'csi84990_BD_SIGEM_UV';
+
+// Crear conexión
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Verificar conexión
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
+}
+
+// Consulta para actualizar TotalDinero2
+$updateSql = "UPDATE ECO_Tabla_Maestra_FINAL_1 
+              SET TotalDinero = PrecioUnitarioPesos * cantidad";
+
+if ($conn->query($updateSql) === TRUE) {
+    echo "Datos actualizados correctamente en TotalDinero.<br>";
+} else {
+    echo "Error al actualizar TotalDinero: " . $conn->error . "<br>";
+}
+
+// Cerrar la conexión
+$conn->close();
+?>
