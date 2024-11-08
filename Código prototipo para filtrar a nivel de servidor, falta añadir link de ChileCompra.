@@ -1,0 +1,170 @@
+# -*- coding: utf-8 -*-
+import pandas as pd
+from datetime import datetime
+import locale
+import re
+import os #Para verificar la existencia del archivo
+
+locale.setlocale(locale.LC_ALL, ("es_ES", "UTF-8"))
+
+DEBUG = True
+###########################################################
+def limpiar_texto(text):
+    if pd.isnull(text):  # Manejar valores nulos
+        return "No especificado"
+    
+    # Reemplazar saltos de línea y otros caracteres
+    text = text.replace('\n', '').replace('\r', '')
+    text = text.replace("'", " ")
+    text = text.replace(",", " ")
+    text = text.replace(";", " ")
+    return text
+##########################################################
+def clasificar_servicio(fila):
+    texto_combinado = u"{} {} {}".format(fila['Nombre'], fila['EspecificacionProveedor'], fila['EspecificacionComprador'])
+    palabras_clave = {
+        'mantenimiento Sin Especificar': ["mantenci", "mant."],
+        'mantenimiento preventivo': ["preventivo","prev.","PREV","Prev"],
+        'mantenimiento correctivo': ["correctivo"],
+        'Arriendo': ["arriendo","arr."],
+        'Insumos o accesorios': ["insumos","accesorios"],
+        'Comodato': ["comodato"]
+    }
+    for clasificacion, palabras in palabras_clave.items():
+        for palabra in palabras:
+            if palabra in texto_combinado.lower():
+                return clasificacion
+    return 'adquisicion o compra'
+###########################################################
+def calcular_moneda(fila):
+    try:
+        monto_total = float(fila['MontoTotalOC_PesosChilenos'])
+        impuestos = float(fila['Impuestos'])
+        total_neto = float(fila['TotalNetoOC'])
+        divisor = impuestos + total_neto
+        if divisor != 0:
+            return monto_total / divisor
+        else:
+            return 0
+    except ValueError:
+        return 0
+###########################################################
+def calcular_descuento_cargo(fila):
+    if fila['Descuentos'] > 0 and fila['Cargos'] > 0:
+        return "Descuento y cargos"
+    elif fila['Descuentos'] > 0:
+        return "Tiene Descuento"
+    elif fila['Cargos'] > 0:
+        return "Tiene Cargos"
+    else:
+        return "Sin descuento ni cargos"
+###########################################################
+def procesar_archivo(csv, columnas):
+    if DEBUG:
+        print("Lee Archivo", csv)
+    
+    df1 = pd.read_csv(csv, sep=";", decimal=",", encoding="ISO-8859-1")  # lee el csv
+    
+    df1 = df1[columnas]
+    
+    df1['EspecificacionComprador'] = df1['EspecificacionComprador'].str.slice(0, 200)
+    df1['EspecificacionProveedor'] = df1['EspecificacionProveedor'].apply(limpiar_texto)
+    df1['EspecificacionComprador'] = df1['EspecificacionComprador'].apply(limpiar_texto)
+    df1.replace({r'\n': '', r'\r': ''}, regex=True, inplace=True)#reemplaza todos los saltos de línea en el dataframe
+    ##df1['codigoProductoONU'] = df1['codigoProductoONU'].apply(lambda x: str(int(float(x))) if pd.notnull(x) else 'vacio')
+
+
+    if DEBUG:
+        print("Total1", df1.shape[0])
+
+    df1 = df1[df1.Estado.isin(["Recepcion Conforme", "Aceptada","Enviada a proveedor"])]
+    if DEBUG:
+        print("Total2", df1.shape[0])
+
+    df1 = df1[df1.EstadoProveedor.isin(["Recepcion Conforme", "Aceptada"])]
+    if DEBUG:
+        print("Total3", df1.shape[0])
+
+    df1 = df1[df1.RubroN1.isin([u"Equipamiento y suministros médicos"])]#, "Equipamiento para laboratorios"
+    df1 = df1[df1.sector.isin(["Salud","FFAA","Municipalidades"])]
+    if DEBUG:
+        print("Total4", df1.shape[0])
+
+    df1 = df1[~df1.RubroN2.isin(["Equipos y suministros para veterinaria",
+                                 u"Vestuario clínico",
+                                 "Productos para el cuidado de heridas",
+                                 u"Suministros para formación y estudios de medicina",
+                                 "Equipo y accesorios para animales de laboratorio"])]
+
+    df1 = df1[~df1.RubroN3.isin([u"Fórmulas y productos para apoyo nutritivo"])]
+
+    if DEBUG:
+        print("Total5", df1.shape[0])
+
+    # Extrae solo el mes y el año
+    mes = []
+    agno = []
+    for i in df1['FechaEnvio']:
+        separo = i.split(" ")
+        fecha_dt = datetime.strptime(separo[0], '%Y-%m-%d')
+        month = fecha_dt.strftime('%m')
+        year = fecha_dt.strftime('%Y')
+        mes.append(month)
+        agno.append(year)
+
+    df1['Mes'] = mes
+    df1['Agno'] = agno
+
+    # Asegurémonos de que las columnas 'Agno' y 'Mes' sean numéricas
+    df1['Agno'] = pd.to_numeric(df1['Agno'], errors='coerce')
+    df1['Mes'] = pd.to_numeric(df1['Mes'], errors='coerce')
+
+    if DEBUG:
+        print('Meses:', df1['Mes'].unique())
+
+    # Crear la columna TipoServicio
+    df1['TipoServicio'] = df1.apply(clasificar_servicio, axis=1)
+
+    if DEBUG:
+        print("TipoServicio creado")
+
+    df1['moneda'] = df1.apply(calcular_moneda, axis=1)
+    
+    if DEBUG:
+        print("calcular_moneda creado")
+
+    # Crear la columna totalLineaNeto_CLP
+    df1['totalLineaNeto_CLP'] = (df1['totalLineaNeto'] * df1['moneda']).abs()
+
+    if DEBUG:
+        print("totalLineaNeto_CLP creado")
+
+    df1['Descuento_Cargo'] = df1.apply(calcular_descuento_cargo, axis=1)
+    if DEBUG:
+        print("Descuento_Cargo creado")
+
+    return df1
+###########################################################
+# Uso de la función
+csv = "2023-10.csv"
+columnas_iniciales = ['Link','Nombre','Estado','EstadoProveedor','DescripcionTipoOC','NombreroductoGenerico','codigoProductoONU',
+            'FechaEnvio','TipoMonedaOC','Impuestos','MontoTotalOC_PesosChilenos','TotalNetoOC','CodigoProveedor',
+            'CodigoOrganismoPublico','OrganismoPublico','sector','RegionUnidadCompra','ActividadProveedor',
+            'RutSucursal','Sucursal','NombreProveedor','UnidadMedida','RegionProveedor',
+            'IDItem','RubroN1','RubroN2','RubroN3','EspecificacionComprador','EspecificacionProveedor',
+            'cantidad','totalLineaNeto','Codigo','RutUnidadCompra','UnidadCompra','Descuentos','Cargos','EsTratoDirecto']
+
+# Llamada a la función procesar_archivo
+df_resultado = procesar_archivo(csv, columnas_iniciales)
+
+columnas_finales = ['Link','Nombre','NombreroductoGenerico','codigoProductoONU','CodigoProveedor','ActividadProveedor',
+                    'CodigoOrganismoPublico','OrganismoPublico','sector','RegionUnidadCompra','DescripcionTipoOC',
+                    'RutSucursal','Sucursal','NombreProveedor','UnidadMedida','RegionProveedor',
+                    'IDItem','RubroN1','RubroN2','RubroN3','EspecificacionProveedor',
+                    'cantidad','Codigo','RutUnidadCompra','UnidadCompra','EsTratoDirecto',
+                    'TipoServicio','Descuento_Cargo','totalLineaNeto_CLP','Mes','Agno']
+
+df_resultado = df_resultado[columnas_finales]
+df_resultado.fillna("vacio", inplace=True)
+
+df_resultado.to_csv("Tabla_Maestra.csv", sep=";", decimal=".", encoding="ISO-8859-1", index=False)
