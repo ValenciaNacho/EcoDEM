@@ -1,0 +1,124 @@
+<?php 
+include "header.php";
+error_reporting(E_ALL);
+
+//formato de las etiquetas
+$size1="20px";
+$color1="#FFFFFF";
+$color2="#333399";
+$size2="40px";
+$style="bold";
+$colorbg="#cccccc";
+$ancho="250px";
+$conn=Conectar_BDpx_SIGEM();
+
+?>
+
+<div class="section hero text-center background-dark dark-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-content" style="color: #FFFFFF; font-size: 18px; margin: 0 auto;">
+                    <h2 style="font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px;">¿Cómo interpretar los datos generales?</h2>
+                    <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 20px; margin-top: 20px; text-align: left; max-width: 1000px; margin: 0 auto;">
+                        <p>
+                            <strong>Números:</strong> Los montos están expresados en millones de CLP. En este formato, los puntos indican miles y las comas indican decimales. Por ejemplo:
+                            <br><strong>4.234</strong> representa <em>cuatro mil doscientos treinta y cuatro millones de CLP</em>.
+                            <br><strong>4,5</strong> representa <em>cuatro coma cinco millones de CLP</em>.
+                            <br>Cuando hablamos de montos, los datos están expresados en millones. Sin embargo, cuando se trata de la cantidad de productos o la cantidad de órdenes de compra, estos se muestran de forma normal o unitaria.
+                        </p>
+                        <p>
+                            <strong>Glosario:</strong>
+                            <br><strong>AG</strong> --> Compra Ágil
+                            <br><strong>CC</strong> --> Compra Coordinada
+                            <br><strong>CM</strong> --> Convenio Marco
+                            <br><strong>MC</strong> --> MicroCompra
+                            <br><strong>OC</strong> --> Orden de Compra
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- SECCION 1 -->
+<div class="section service text-center">
+    <div class="container">
+        <h2 class="section-title">Datos Generales</h2>
+        <div class="row">
+            <iframe width="1200" height="900" src="https://lookerstudio.google.com/embed/reporting/46945647-c9f0-41f4-9d70-d99534868159/page/p_kusoezs8id" frameborder="0" style="border:0" allowfullscreen sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>
+        </div>
+    </div>
+</div>
+
+<div class="section hero text-center background-dark dark-bg">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="text-content" style="color: #FFFFFF; font-size: 18px; margin: 0 auto;">
+                    <h2 style="font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px;">Nomenclatura ONU</h2>
+                    <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 20px; margin-top: 20px; text-align: left; max-width: 1000px; margin: 0 auto;">
+                        <p>Es un sistema de clasificación de productos ampliamente reconocido y utilizado a nivel internacional. Este sistema consta de cuatro niveles jerárquicos: Rubro 1, Rubro 2, Rubro 3 y Código ONU. El Código ONU hace referencia al nombre genérico del producto.</p>
+                        
+                        <p>Este sistema de clasificación es esencial para diferenciar productos relacionados con dispositivos y equipos médicos de aquellos que no tienen ninguna relación. En los datos presentados actualmente, solo se incluyen productos que corresponden a dispositivos y equipos médicos, asegurando así la relevancia y precisión de la información.</p>
+                        
+                        <p>La nomenclatura ONU no solo facilita la gestión y organización de productos a nivel global, sino que también es crucial para cumplir con normativas y estándares internacionales, mejorando la trazabilidad y seguridad en el manejo de dispositivos médicos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SECCION 1, Estructura de la Orden de Compra -->
+<div class="section service text-center">
+    <div class="container">
+        <h2 class="section-title">Análisis de la Estructura de la Orden de Compra</h2>
+        <div class="bg-light rounded-3 p-4 mb-4 shadow-sm" style="max-width: 900px; margin: 20px auto; text-align: left;">
+            <p>Los datos presentados provienen de las órdenes de compra almacenadas en la base de datos de ChileCompra, una plataforma utilizada por organismos públicos para realizar transacciones y adquirir diversos productos y servicios ofrecidos por múltiples proveedores.</p>
+            <p>Las órdenes de compra se pueden clasificar según la modalidad de compra, que incluye opciones como Compra Ágil, Compra Coordinada, Convenio Marco, MicroCompra y Sin Emisión Automática (para licitaciones privadas y públicas).</p>
+            <p>Además, los productos dentro de estas órdenes de compra están clasificados según la nomenclatura ONU, un sistema internacional de clasificación que organiza los productos en cuatro niveles jerárquicos. El Rubro 1 es el nivel más general, que diferencia los dispositivos médicos de otros productos no médicos, mientras que el Código ONU representa el nivel más específico de esta clasificación. Los datos mostrados en esta sección se limitan a los rubros correspondientes a Dispositivos y Equipos Médicos.</p>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+            <img src="archivos/png/Estructura_OC.png" alt="Estructura OC" class="img-fluid rounded-3 shadow-sm" style="
+                max-width: 900px; /* Ajusta el tamaño máximo */
+                border: 5px solid #333; /* Color y grosor del borde */
+                padding: 5px; /* Espacio entre la imagen y el borde */
+                background-color: #fff; /* Color de fondo detrás del borde */
+            "/>
+            <div style="max-width: 900px; margin: 10px auto; font-size: 14px; color: #333; text-align: center;">
+                <p>Estructura General de la Orden de Compra</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!-- SECCION 2 -->
+<div class="section text-center background-primary dark-bg">
+    <div class="background-image" style="background: url(/_general/fondos/hero.webp) no-repeat fixed center center; background-size: cover; opacity: .2; filter: blur(2px);"></div>
+    <div class="container" style="max-width: 1200px;">
+        <h2 style="font-size: 24px; font-weight: bold; text-align: center; color: #FFFFFF; margin-bottom: 20px;">CRITERIOS DE INCLUSIÓN Y EXCLUSIÓN</h2>
+        <div class="section-content" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; text-align: left; max-width: 1000px; margin: 0 auto;">
+            <p>
+                <strong>Campo "ESTADO"</strong>: Inclusión ["Recepción Conforme", "Aceptada"] Exclusión ["Canceladas"]
+                <br><strong>Campo "ESTADO Proveedor"</strong>: Inclusión ["Recepción Conforme", "Aceptada"] Exclusión ["Canceladas"]
+                <br><strong>Campo "FECHA ENVÍO"</strong>: Todas las OC se clasifican en AÑO y MES según el campo "Fecha de Envío"
+                <br><strong>Campo "RUBRO 1"</strong>: Inclusión ["Equipamiento y suministros médicos", "Equipamiento para laboratorios"]
+                <br><strong>Campos NO UTILIZADOS:</strong> MontoTotalOC_PesosChilenos y TotalNetoOC. Dado que la base maestra que utiliza EcoDEM tiene un filtro por algunos rubros, el monto total de la OC puede ser mayor cuando se incluyen en la misma OC items de otros rubros.
+                <br><strong>Campo Seleccionado para cálculo de montos "totalLineaNeto":</strong> Explicación: Campos Relacionados: La "cantidad" x "precioUnitario" = "precioNeto" pero NO incluye descuentos ni cargos. Sin embargo, el campo "totalLineaNeto" incluye ambos y se puede dividir por cantidad para estimar el valor unitario real.
+                <br><strong>Se calculó valor de la MONEDA (USD, EUR, UF, etc.) de la siguiente manera:</strong> Para cada OC se aplicó: MONEDA = MontoTotalOC_PesosChilenos / (TotalNetoOC + TotalImpuestosOC), este campo se ve afectado por el descuento y cargos de la Orden de Compra.
+                <br><strong>Se calculó valor de la MONEDA (USD, EUR, UF, etc.) de la siguiente manera:</strong> 
+                <pre><code>MONEDA = MontoTotalOC_PesosChilenos / (TotalNetoOC + TotalImpuestosOC)</code></pre> este campo se ve afectado por el descuento y cargos de la Orden de Compra.
+                <br><strong>ID vs Código/Link:</strong> La base a nivel item contiene un ID distinto para cada OC. Se detectaron OC del mismo comprador pero a distintos proveedores que tienen el mismo Código/Link. Ej. en 2023-1 hay 25 casos. Para contar adecuadamente las OC distintas se debería aplicar DISTINCT(ID).
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<?php SIGEM_UV_BottomLine2(); ?><!-- FOOTER →
