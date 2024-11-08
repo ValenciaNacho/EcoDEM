@@ -1,0 +1,48 @@
+<?php
+
+// Conexión a la base de datos
+$conn = new mysqli('localhost', 'csi84990_sigem', 'N2$nsntl5k$0', 'csi84990_BD_SIGEM_UV');
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
+}
+
+// Consulta para eliminar todos los datos de la tabla ECO_Tabla_Maestra_Organismos_2
+$deleteDataQuery = "DELETE FROM ECO_Tabla_Maestra_Organismos_2";
+
+if ($conn->query($deleteDataQuery) === TRUE) {
+    echo "Datos eliminados exitosamente de 'ECO_Tabla_Maestra_Organismos_2'.<br>";
+} else {
+    echo "Error al eliminar datos: " . $conn->error . "<br>";
+}
+
+// Consulta para insertar datos agrupados y seleccionados desde ECO_Tabla_Maestra_FINAL_1
+$insertDataQuery = "
+    INSERT INTO ECO_Tabla_Maestra_Organismos_2 (
+        OrganismoPublico, ID, Agno, Tipo, EsTratoDirecto, sector
+    )
+    SELECT 
+        OrganismoPublico, 
+        ID,
+        Agno,
+        Tipo,
+        EsTratoDirecto,
+        sector
+    FROM ECO_Tabla_Maestra_FINAL_1
+    GROUP BY 
+        OrganismoPublico, 
+        ID,
+        Agno,
+        Tipo,
+        EsTratoDirecto,
+        sector
+";
+
+if ($conn->query($insertDataQuery) === TRUE) {
+    echo "Datos insertados exitosamente en 'ECO_Tabla_Maestra_Organismos_2'.";
+} else {
+    echo "Error al insertar datos: " . $conn->error;
+}
+
+// Cierra la conexión a la base de datos
+$conn->close();
+?>
