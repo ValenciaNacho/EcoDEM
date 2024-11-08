@@ -1,0 +1,250 @@
+<?php
+include "header.php";
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Productos</title>
+    <link rel="stylesheet" href="styles/styles.css">
+    <!-- Agregar Bootstrap o cualquier otra librería CSS si es necesario -->
+</head>
+<body>
+    <div class="section text-center background-light" style="padding: 20px; background-color: #f8f9fa;">
+        <div class="container-fluid mt-5">
+            <!-- Texto de advertencia -->
+            <div class="warning-text p-3" style="background-color: #fff3cd; border-radius: 10px; border: 1px solid #ffeeba; font-size: 18px;">
+                <h5 style="font-size: 24px;"><strong>Advertencia</strong></h5>
+                <p>
+                    Esta página está en desarrollo. Los resultados presentados pueden no ser completamente precisos. Tenga en cuenta que los cálculos y montos pueden estar afectados por impuestos, cargos y descuentos aplicables a los productos.
+                </p>
+                <p>
+                    <strong>Estructura de Datos:</strong> Varios productos pueden estar clasificados bajo un mismo código ONU (como accesorios, alquiler, mantenimiento o adquisición de equipos). Debido a esto, puede aparecer una lista extensa de productos que coinciden con dicho código. El promedio que se muestra corresponde a todos esos productos.
+                </p>
+                <p>
+                    <strong>Interpretación de Datos:</strong>
+                </p>
+                <ul>
+                    <li><strong>4.5 --></strong> Cuatro mil quinientos (valor en miles).</li>
+                    <li><strong>4,5 --></strong> Cuatro punto cinco (valor decimal).</li>
+                </ul>
+                <p><strong>Moneda:</strong> Los datos están expresados en CLP (Pesos Chilenos).</p>
+                <p><strong>Debe</strong> seleccionar los campos.</p>
+            </div>
+
+            <h1 class="text-center mb-4" style="margin-bottom: 1.5rem; font-size: 2.5rem;">Consulta de Productos</h1>
+            <form method="POST" action="" class="mb-4">
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="palabraClave">Ingrese Nombre de equipo o dispositivo</label>
+                        <input type="text" id="palabraClave" name="palabraClave" class="form-control" placeholder="Ejemplo: Monitor de signos vitales">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="marcaClave">Ingrese Marca del equipo o dispositivo</label>
+                        <input type="text" id="marcaClave" name="marcaClave" class="form-control" placeholder="Ingrese marca, Ejemplo: Efficia">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="modeloClave">Ingrese Modelo del equipo</label>
+                        <input type="text" id="modeloClave" name="modeloClave" class="form-control" placeholder="Ejemplo: CM120">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tipoServicio">Selecciona el Tipo de Servicio:</label>
+                    <div class="checkbox-group">
+                        <?php
+                        // Configuración de la base de datos
+                        $servername = 'localhost';
+                        $username = 'csi84990_sigem';
+                        $password = 'N2$nsntl5k$0';
+                        $dbname = 'csi84990_BD_SIGEM_UV';
+
+                        // Crear conexión
+                        $conn = new mysqli($servername, $username, $password, $dbname);
+
+                        // Verificar conexión
+                        if ($conn->connect_error) {
+                            die("Conexión fallida: " . $conn->connect_error);
+                        }
+
+                        // Configurar la codificación de caracteres
+                        $conn->set_charset("utf8mb4");
+
+                        // Obtener tipos de servicio únicos
+                        $tipoServicioSql = "SELECT DISTINCT TipoServicio FROM ECO_Tabla_Maestra_Buscador2 ORDER BY (TipoServicio='Adquisicion') DESC, TipoServicio";
+                        $tipoServicioResult = $conn->query($tipoServicioSql);
+
+                        // Array de descripciones de tipos de servicio
+                        $descripciones = [
+                            "Adquisicion" => "(Ejemplo: Monitor de signos vitales, microscopios, desfibrilador)",
+                            "Dispositivos desechables o descartables" => "(Ejemplo: Aguja, guante)",
+                            "Adquisicion de dispositivos Implantables" => "(Ejemplo: marcapasos, desfibrilador)",
+                            "Accesorio" => "(Ejemplo: cables para monitor, electrodos, termómetros, papel ECG)",
+                            "Arriendo" => "(Ejemplo: arriendo de monitor, desfibrilador, microscopios, etc.)",
+                            "Mantenimiento" => "(Servicios de mantenimiento correctivo o preventivo)",
+                            "Otros" => "(Ejemplo: examen, programa, informe)",
+                        ];
+
+                        // Mostrar tipos de servicio como checkboxes
+                        if ($tipoServicioResult->num_rows > 0) {
+                            while ($row = $tipoServicioResult->fetch_assoc()) {
+                                $tipoServicio = htmlentities($row['TipoServicio'], ENT_QUOTES, 'UTF-8');
+                                $descripcion = isset($descripciones[$tipoServicio]) ? $descripciones[$tipoServicio] : '';
+                                echo "<div class='form-check'>
+                                        <input class='form-check-input checkbox-custom' type='checkbox' name='tipoServicio[]' value='$tipoServicio' id='tipoServicio_$tipoServicio'>
+                                        <label class='form-check-label checkbox-label' for='tipoServicio_$tipoServicio'>
+                                            <strong>$tipoServicio</strong> <span style='font-size: 1.3rem; color: #6c757d;'>$descripcion</span>
+                                        </label>
+                                      </div>";
+                            }
+                        }
+
+                        // Cerrar la conexión para esta consulta
+                        $conn->close();
+                        ?>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Consultar</button>
+            </form>
+
+            <?php
+            if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+                // Configuración de la base de datos
+                $servername = 'localhost';
+                $username = 'csi84990_sigem';
+                $password = 'N2$nsntl5k$0';
+                $dbname = 'csi84990_BD_SIGEM_UV';
+
+                // Crear conexión
+                $conn = new mysqli($servername, $username, $password, $dbname);
+
+                // Verificar conexión
+                if ($conn->connect_error) {
+                    die("Conexión fallida: " . $conn->connect_error);
+                }
+
+                // Configurar la codificación de caracteres
+                $conn->set_charset("utf8mb4");
+
+                // Obtener la palabra clave, marca, modelo y los tipos de servicio seleccionados por el usuario
+                $palabraClave = $_POST['palabraClave'];
+                $marcaClave = $_POST['marcaClave'];
+                $modeloClave = $_POST['modeloClave'];
+                $tipoServicios = $_POST['tipoServicio'];
+
+                // Convertir tipos de servicio a una lista separada por comas para la consulta SQL
+                if (empty($tipoServicios)) {
+                    $tipoServiciosList = "''"; // Si no se selecciona ningún tipo, la lista de servicios será vacía
+                } else {
+                    $tipoServiciosList = "'" . implode("','", array_map([$conn, 'real_escape_string'], $tipoServicios)) . "'";
+                }
+
+                // Construir la consulta SQL dinámica
+                $sql = "SELECT Link, Nombre, codigoProductoONU, NombreroductoGenerico, PrecioUnitarioPesos, EspecificacionProveedor, EspecificacionComprador, TipoServicio
+                        FROM ECO_Tabla_Maestra_Buscador2 
+                        WHERE TipoServicio IN ($tipoServiciosList)";
+                
+                // Añadir condiciones dinámicas según las palabras clave ingresadas
+                if (!empty($palabraClave)) {
+                    $sql .= " AND (EspecificacionProveedor LIKE ? OR EspecificacionComprador LIKE ? OR Nombre LIKE ?)";
+                }
+                if (!empty($marcaClave)) {
+                    $sql .= " AND (EspecificacionProveedor LIKE ? OR EspecificacionComprador LIKE ? OR Nombre LIKE ?)";
+                }
+                if (!empty($modeloClave)) {
+                    $sql .= " AND (EspecificacionProveedor LIKE ? OR EspecificacionComprador LIKE ? OR Nombre LIKE ?)";
+                }
+
+                // Preparar la consulta
+                $stmt = $conn->prepare($sql);
+                if ($stmt === false) {
+                    die("Error en la preparación de la consulta: " . $conn->error);
+                }
+
+                // Bind variables para la consulta
+                $params = [];
+                if (!empty($palabraClave)) {
+                    $params[] = "%$palabraClave%";
+                    $params[] = "%$palabraClave%";
+                    $params[] = "%$palabraClave%";
+                }
+                if (!empty($marcaClave)) {
+                    $params[] = "%$marcaClave%";
+                    $params[] = "%$marcaClave%";
+                    $params[] = "%$marcaClave%";
+                }
+                if (!empty($modeloClave)) {
+                    $params[] = "%$modeloClave%";
+                    $params[] = "%$modeloClave%";
+                    $params[] = "%$modeloClave%";
+                }
+
+                // Bind params al statement
+                if (!empty($params)) {
+                    $stmt->bind_param(str_repeat('s', count($params)), ...$params);
+                }
+
+                // Ejecutar la consulta
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                // Obtener el número de resultados
+                $totalResultados = $result->num_rows;
+
+                // Mostrar el número total de resultados
+                echo "<h3>Resultados encontrados: $totalResultados</h3>";
+
+                // Mostrar los resultados
+                echo "<table class='table table-striped table-bordered'>
+                        <thead>
+                            <tr>
+                                <th>Link</th>
+                                <th>Nombre</th>
+                                <th>Código Producto ONU</th>
+                                <th>Nombre Producto Genérico</th>
+                                <th>Precio Unitario (Pesos)</th>
+                                <th>Especificación Proveedor</th>
+                                <th>Especificación Comprador</th>
+                                <th>Tipo Servicio</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+
+                while ($row = $result->fetch_assoc()) {
+                    $link = htmlentities($row['Link'], ENT_QUOTES, 'UTF-8');
+                    $nombre = htmlentities($row['Nombre'], ENT_QUOTES, 'UTF-8');
+                    $codigoProductoONU = htmlentities($row['codigoProductoONU'], ENT_QUOTES, 'UTF-8');
+                    $nombreroductoGenerico = htmlentities($row['NombreroductoGenerico'], ENT_QUOTES, 'UTF-8');
+                    $precioUnitarioPesos = htmlentities($row['PrecioUnitarioPesos'], ENT_QUOTES, 'UTF-8');
+                    $especificacionProveedor = htmlentities($row['EspecificacionProveedor'], ENT_QUOTES, 'UTF-8');
+                    $especificacionComprador = htmlentities($row['EspecificacionComprador'], ENT_QUOTES, 'UTF-8');
+                    $tipoServicio = htmlentities($row['TipoServicio'], ENT_QUOTES, 'UTF-8');
+
+                    echo "<tr>
+                            <td><a href='$link' class='btn btn-primary' target='_blank'>Ver</a></td>
+                            <td>$nombre</td>
+                            <td>$codigoProductoONU</td>
+                            <td>$nombreroductoGenerico</td>
+                            <td>$precioUnitarioPesos</td>
+                            <td>$especificacionProveedor</td>
+                            <td>$especificacionComprador</td>
+                            <td>$tipoServicio</td>
+                          </tr>";
+                }
+
+                echo "</tbody></table>";
+
+                // Cerrar la consulta y la conexión
+                $stmt->close();
+                $conn->close();
+            }
+            ?>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html> 
