@@ -1,0 +1,53 @@
+<?php
+
+date_default_timezone_set("Chile/Continental");
+$Hoy = date("d-m-Y"); // Fecha reporte
+
+$month = ltrim(date("m"), "0"); // Elimina el cero inicial para meses de un solo dígito  
+
+// Nombre del archivo a procesar
+$archivo_guardado = "E_2024-5.csv"; // Especifica el archivo que quieres procesar
+
+// Conexión a la base de datos
+$conn = new mysqli('localhost', 'csi84990_sigem', 'N2$nsntl5k$0', 'csi84990_BD_SIGEM_UV');
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
+}
+
+echo "<br><b>Archivo cargado:</b> " . $archivo_guardado . "<br>";
+
+if (file_exists($archivo_guardado)) {
+    $fp = fopen($archivo_guardado, "r");
+    $rows = 0;
+    $campos = [];
+    while ($datos = fgetcsv($fp, 10000, ";")) {
+        if ($rows == 0) {
+            $campos = $datos[0];
+            for ($c = 1; $c < count($datos); $c++) {
+                $campos .= ", " . $datos[$c];
+            }
+        } else {
+            $datos[0] = str_replace("'", " ", $datos[0]); // Reemplaza posibles caracteres extraños '
+            $dat = "'" . $datos[0] . "'";
+            for ($c = 1; $c < count($datos); $c++) {
+                $datos[$c] = str_replace("'", " ", $datos[$c]); // Reemplaza posibles caracteres extraños '
+                $dat .= ",'" . $datos[$c] . "'";
+            }
+            $query = "INSERT INTO ECO_Tabla_Maestra_FINAL_1 ($campos) VALUES ($dat)";
+            $respuesta = $conn->query($query);
+            if (!$respuesta) {
+                die("Error INSERT SQL: " . mysqli_error($conn));
+            }
+        }
+        $rows++;
+    }
+    fclose($fp); // Asegúrate de cerrar el archivo
+    echo "<br>Query INSERT: " . $query;
+    echo "<br>Rows: " . $rows;
+} else {
+    echo "<br>No existe el archivo especificado";
+}
+
+// Cierra la conexión a la base de datos
+$conn->close();
+?>
