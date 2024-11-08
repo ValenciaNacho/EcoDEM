@@ -1,0 +1,40 @@
+<?php
+// Configuración de la base de datos
+$servername = 'localhost';
+$username = 'csi84990_sigem';
+$password = 'N2$nsntl5k$0';
+$dbname = 'csi84990_BD_SIGEM_UV';
+
+// Crear conexión
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Verificar conexión
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
+}
+
+// Consulta para eliminar los datos de la tabla ECO_Tabla_Maestra_Buscador2
+$delete_sql = "DELETE FROM ECO_Tabla_Maestra_Buscador2";
+
+if ($conn->query($delete_sql) === TRUE) {
+    echo "Datos eliminados exitosamente.<br>";
+} else {
+    echo "Error al eliminar datos: " . $conn->error . "<br>";
+}
+
+// Consulta para copiar e insertar datos donde UnidadMedida = 'Unidad' y RubroN3 contiene ciertas palabras
+$insert_sql = "INSERT INTO ECO_Tabla_Maestra_Buscador2 (Link, Nombre, codigoProductoONU, NombreroductoGenerico, PrecioUnitarioPesos, EspecificacionProveedor, EspecificacionComprador, UnidadMedida)
+        SELECT Link, Nombre, codigoProductoONU, NombreroductoGenerico, PrecioUnitarioPesos, EspecificacionProveedor, EspecificacionComprador, UnidadMedida
+        FROM ECO_Tabla_Maestra_FINAL_1
+        WHERE UnidadMedida = 'Unidad'
+        AND (RubroN3 LIKE '%equipo%' OR RubroN3 LIKE '%unidad%' OR RubroN3 LIKE '%analizador%' OR RubroN3 LIKE '%mesa%' OR RubroN3 LIKE '%incubadora%')";
+
+if ($conn->query($insert_sql) === TRUE) {
+    echo "Datos copiados e insertados exitosamente.";
+} else {
+    echo "Error: " . $insert_sql . "<br>" . $conn->error;
+}
+
+// Cerrar la conexión
+$conn->close();
+?>
