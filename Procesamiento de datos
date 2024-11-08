@@ -1,0 +1,57 @@
+import pandas as pd
+import os
+import csv
+import time
+
+dfA=pd.read_csv("hist_OC_erroneas.csv",sep=";",decimal=",", encoding="ISO-8859-1")#, nrows=10)#,on_bad_lines='skip')#,chunksize=64536):
+ListaExcluidosA=dfA["idoc"].tolist()
+dfB=pd.read_csv("hist_moneda_H_vs_I.csv",sep=";",decimal=",", encoding="ISO-8859-1")#, nrows=10)#,on_bad_lines='skip')#,chunksize=64536):
+ListaExcluidosB=dfB["porID"].tolist()
+9
+
+NivelItem=True
+NivelOC=False
+for año in range(2024,2025):
+    for mes in range(1,5+1):
+
+        start_time = time.time()# Inicio del cronómetro
+
+        
+        arch=str(año)+"-"+str(mes)+".csv"
+        print(arch)
+#        "Descripcion/Obervaciones"
+        col=["ID","Link","Nombre",
+             "Tipo","ProcedenciaOC","EsTratoDirecto","EsCompraAgil",
+             "PromedioCalificacion","CantidadEvaluacion",
+             "codigoCategoria","Categoria","codigoProductoONU","NombreroductoGenerico","RubroN1","RubroN2","RubroN3",
+             "DescripcionTipoOC","totalLineaNeto","Cargos","TotalNetoOC","Descuentos","Impuestos","cantidad","Estado","FechaEnvio","MontoTotalOC_PesosChilenos",            "CodigoOrganismoPublico","OrganismoPublico","sector","ActividadComprador","RegionUnidadCompra","Sucursal","NombreProveedor"]        
+        df=pd.read_csv(arch,sep=";",decimal=",", encoding="ISO-8859-1",quotechar='"',quoting=csv.QUOTE_MINIMAL,usecols=col, dtype={"codigoProductoONU": str})#, nrows=10)#,on_bad_lines='skip')#,chunksize=64536):
+        #df = df[df['RubroN1'].isin(["Equipamiento y suministros médicos", "Equipamiento para laboratorios"])]
+        df.replace({r'\n': '', r'\r': ''}, regex=True, inplace=True)#reemplaza todos los saltos de línea en el dataframe
+        #df=df.drop_duplicates()
+        df = df[df['ID'] != 47527693]
+        df = df[~df['ID'].isin(dfA["idoc"])]
+        df = df[~df['ID'].isin(dfB["porID"])]
+
+
+        if NivelItem==True:
+            df["Moneda"]=df["MontoTotalOC_PesosChilenos"]/(df["TotalNetoOC"]+ df["Impuestos"] -df["Descuentos"]+df["Cargos"])  #ojo... este no: df["totalImpuestos"])
+            df["ImpuestosDescuentosCargos_Pesos"]=df["MontoTotalOC_PesosChilenos"]-(df["TotalNetoOC"]*df["Moneda"])
+            df["PrecioUnitarioPesos"]=(df["totalLineaNeto"]*df["Moneda"]+df["ImpuestosDescuentosCargos_Pesos"]*(df["totalLineaNeto"]/df["TotalNetoOC"]))/df["cantidad"]
+            #idm=df['MontoTotalOC_PesosChilenos'].idxmax()
+            #print(df["MontoTotalOC_PesosChilenos"].max(),"idMax:",idm,"ID:",df['ID'][idm])
+            df.to_csv(".\Tableau_archivos\D"+arch,sep=";", decimal=".", encoding="ISO-8859-1",quotechar='"', quoting=csv.QUOTE_ALL, index=False)
+        if NivelOC==True:
+            col=["ID","Link","Nombre",
+             "Tipo","ProcedenciaOC","EsTratoDirecto","EsCompraAgil",
+             "PromedioCalificacion","CantidadEvaluacion",
+             "DescripcionTipoOC","Estado","FechaEnvio","MontoTotalOC_PesosChilenos",
+             "CodigoOrganismoPublico","OrganismoPublico","sector","ActividadComprador","RegionUnidadCompra","Sucursal","NombreProveedor"]
+            df_OC=df[col].copy()
+            df_OC=df_OC.drop_duplicates() #Ojo.. esto sólo para nivel OC
+            df_OC.to_csv(".\\"+"NivelOC\D"+arch,sep=";", decimal=".", encoding="ISO-8859-1",quotechar='"', quoting=csv.QUOTE_ALL, index=False)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time# Cálculo del tiempo transcurrido
+        print(f"Tiempo transcurrido: {elapsed_time:.6f} segundos")
+        #print(df.columns)
