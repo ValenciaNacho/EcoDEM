@@ -1,0 +1,107 @@
+<?php
+// Configuración de la base de datos
+$servername = 'localhost';
+$username = 'csi84990_sigem';
+$password = 'N2$nsntl5k$0';
+$dbname = 'csi84990_BD_SIGEM_UV';
+
+// Crear conexión
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Verificar conexión
+if ($conn->connect_error) {
+    die("Conexión fallida: " . $conn->connect_error);
+}
+
+// 1. Borrar la información en la columna TipoServicio
+$clearTipoServicioSql = "UPDATE ECO_Tabla_Maestra_Buscador2 SET TipoServicio = ''";
+if ($conn->query($clearTipoServicioSql) === TRUE) {
+    echo "Columna TipoServicio limpiada correctamente.<br>";
+} else {
+    echo "Error al limpiar TipoServicio: " . $conn->error . "<br>";
+}
+
+// Listas de palabras clave actualizadas
+$mantenimiento_keywords = ["mantenimiento", "mant.", "MC ", "MP ", "mantención", "servicio", "repara", "correctiva", "preventiva", "mantencion", "Mnantencion"];
+$accesorio_keywords = ["manguera", "papel", "bateria", "batería", "accesorio", "accs", "acces", "insumo", "set", "kit", "cable", 
+                        "sensor", "Electrodo", "Mango ", "Transductor", "Cargador", "Parches", "Sonda", "FILTRO", "parche", "MANGA", "FUNDA", "PASTA", "Repuesto", 
+                        "TRANSFORMADOR", "PIEZA", "ROTOR", "CELDA", "Conector", "VALVULA", "gel", "FUENTE DE PODER","TERMÓMETRO","BANDA"];
+$otros_keywords = ["examen", "programa", "MONITOREAR", "NEUROMONITOREO", "informe", "monitoreo","ACIDO","Bicarbonato","DESINFECTANTE"];
+$arriendo_keywords = ["arr ", "arriendo", "arr.", "prestamo", "arrendar"];
+$implantable_keywords = ["Implante", "Implantable","Implantación","marcapasos"];
+$desechables_keywords = ["Aguja", "guante"];
+
+// Función para generar consultas de actualización
+function generateUpdateQuery($keywords, $tipoServicio, $columns) {
+    $conditions = [];
+    foreach ($keywords as $keyword) {
+        foreach ($columns as $column) {
+            $conditions[] = "$column LIKE '%" . addslashes($keyword) . "%'";
+        }
+    }
+    $conditions_str = implode(' OR ', $conditions);
+    return "UPDATE ECO_Tabla_Maestra_Buscador2 SET TipoServicio='$tipoServicio' WHERE ($conditions_str) AND TipoServicio = ''";
+}
+
+// Columnas a evaluar
+$columns = ["Nombre", "EspecificacionProveedor", "EspecificacionComprador"];
+
+// Generar y ejecutar consultas para "Mantenimiento"
+$mantenimiento_sql = generateUpdateQuery($mantenimiento_keywords, 'Mantenimiento', $columns);
+if ($conn->query($mantenimiento_sql) === TRUE) {
+    echo "Datos actualizados para Mantenimiento.<br>";
+} else {
+    echo "Error al actualizar Mantenimiento: " . $conn->error . "<br>";
+}
+
+// Generar y ejecutar consultas para "Accesorio"
+$accesorio_sql = generateUpdateQuery($accesorio_keywords, 'Accesorio', $columns);
+if ($conn->query($accesorio_sql) === TRUE) {
+    echo "Datos actualizados para Accesorio.<br>";
+} else {
+    echo "Error al actualizar Accesorio: " . $conn->error . "<br>";
+}
+
+// Generar y ejecutar consultas para "Otros"
+$otros_sql = generateUpdateQuery($otros_keywords, 'Otros', $columns);
+if ($conn->query($otros_sql) === TRUE) {
+    echo "Datos actualizados para Otros.<br>";
+} else {
+    echo "Error al actualizar Otros: " . $conn->error . "<br>";
+}
+
+// Generar y ejecutar consultas para "Arriendo"
+$arriendo_sql = generateUpdateQuery($arriendo_keywords, 'Arriendo', $columns);
+if ($conn->query($arriendo_sql) === TRUE) {
+    echo "Datos actualizados para Arriendo.<br>";
+} else {
+    echo "Error al actualizar Arriendo: " . $conn->error . "<br>";
+}
+
+// Generar y ejecutar consultas para "Adquisición de dispositivos Implantables"
+$implantable_sql = generateUpdateQuery($implantable_keywords, 'Adquisicion de dispositivos Implantables', $columns);
+if ($conn->query($implantable_sql) === TRUE) {
+    echo "Datos actualizados para Adquisición de dispositivos Implantables.<br>";
+} else {
+    echo "Error al actualizar Adquisición de dispositivos Implantables: " . $conn->error . "<br>";
+}
+
+// Generar y ejecutar consultas para "Dispositivos desechables o descartables"
+$desechables_sql = generateUpdateQuery($desechables_keywords, 'Dispositivos desechables o descartables', $columns);
+if ($conn->query($desechables_sql) === TRUE) {
+    echo "Datos actualizados para Dispositivos desechables o descartables.<br>";
+} else {
+    echo "Error al actualizar Dispositivos desechables o descartables: " . $conn->error . "<br>";
+}
+
+// 5. Actualizar las filas restantes a "Adquisición"
+$adquisicion_sql = "UPDATE ECO_Tabla_Maestra_Buscador2 SET TipoServicio='Adquisicion' WHERE TipoServicio = ''";
+if ($conn->query($adquisicion_sql) === TRUE) {
+    echo "Datos actualizados para Adquisición.<br>";
+} else {
+    echo "Error al actualizar Adquisición: " . $conn->error . "<br>";
+}
+
+// Cerrar la conexión
+$conn->close();
+?>
