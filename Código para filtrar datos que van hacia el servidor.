@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+import pandas as pd
+from datetime import datetime
+import re
+import time
+import locale
+import os  # Para verificar la existencia del archivo
+import csv
+import sys
+
+dfA = pd.read_csv("hist_OC_erroneas.csv", sep=";", decimal=",", encoding="ISO-8859-1")
+ListaExcluidosA = dfA["idoc"].tolist()
+dfB = pd.read_csv("hist_moneda_H_vs_I.csv", sep=";", decimal=",", encoding="ISO-8859-1")
+ListaExcluidosB = dfB["porID"].tolist()
+
+def clasificar_servicio(fila):
+    texto_combinado = u"{} {} {}".format(fila['Nombre'], fila['EspecificacionProveedor'], fila['EspecificacionComprador'])
+    palabras_clave = {
+        'mantenimiento Sin Especificar': ["mantenci", "mant.", "REPARACION", "REPARAR"],
+        'mantenimiento preventivo': ["preventivo", "prev.", "PREV", "Prev"],
+        'mantenimiento correctivo': ["correctivo"],
+        'Arriendo': ["arriendo", "arr."],
+        'Insumos o accesorios': ["insumos", "accesorios"],
+        'Comodato': ["comodato"]
+    }
+    for clasificacion, palabras in palabras_clave.items():
+        for palabra in palabras:
+            if re.search(palabra, texto_combinado, re.IGNORECASE):
+                return clasificacion
+    return 'adquisicion o compra'
+
+NivelItem = True
+NivelOC = False
+
+for año in range(2024, 2025):
+    for mes in range(1, 5+1):  # El rango debe ser hasta 12 para incluir todos los meses del año
+
+        start_time = time.time()  # Inicio del cronómetro
+
+        arch = "{}-{}.csv".format(año, mes)
+        print(arch)
+
+        col_inicio = ["ID", "Link", "Nombre",
+                      "Tipo", "ProcedenciaOC", "EsTratoDirecto", "EsCompraAgil", "RegionProveedor",
+                      "PromedioCalificacion", "CantidadEvaluacion", "Descripcion/Obervaciones", "UnidadMedida",
+                      "codigoCategoria", "Categoria", "codigoProductoONU", "NombreroductoGenerico", "RubroN1", "RubroN2", "RubroN3", "RutSucursal",
+                      "DescripcionTipoOC", "totalLineaNeto", "Cargos", "TotalNetoOC", "Descuentos", "Impuestos", "cantidad", "Estado", "FechaEnvio", "MontoTotalOC_PesosChilenos",
+                      "CodigoOrganismoPublico", "OrganismoPublico", "sector", "ActividadComprador", "RegionUnidadCompra", "Sucursal", "NombreProveedor", "EspecificacionComprador", "EspecificacionProveedor"]
+
+        df = pd.read_csv(arch, sep=";", decimal=",", encoding="ISO-8859-1", quotechar='"', quoting=csv.QUOTE_MINIMAL, usecols=col_inicio, dtype={"codigoProductoONU": str})
+        df = df[df['RubroN1'].isin(["Equipamiento y suministros médicos", "Equipamiento para laboratorios"])]
+        df = df[df.Estado.isin(["Recepcion Conforme", "Aceptada", "Enviada a proveedor"])]
+
+df = df[~df.RubroN2.isin(["Equipos y suministros para veterinaria",
+                                 "Equipo y accesorios para animales de laboratorio"])]
+
+        # Reemplaza todos los saltos de línea en el dataframe
+        df.replace({r'\n': '', r'\r': '', '"': '', r'\\': '', "'": ''}, regex=True, inplace=True)
+
+        # Eliminar ID específico y valores excluidos
+        df = df[df['ID'] != 47527693]
+        df = df[~df['ID'].isin(dfA["idoc"])]
+        df = df[~df['ID'].isin(dfB["porID"])]
+
+        if NivelItem:
+            df["Moneda"] = df["MontoTotalOC_PesosChilenos"] / (df["TotalNetoOC"] + df["Impuestos"] - df["Descuentos"] + df["Cargos"])
+            df["ImpuestosDescuentosCargos_Pesos"] = df["MontoTotalOC_PesosChilenos"] - (df["TotalNetoOC"] * df["Moneda"])
+            df["PrecioUnitarioPesos"] = (df["totalLineaNeto"] * df["Moneda"] + df["ImpuestosDescuentosCargos_Pesos"] * (df["totalLineaNeto"] / df["TotalNetoOC"])) / df["cantidad"]
+            df['TipoServicio'] = df.apply(clasificar_servicio, axis=1)
+            df["TotalDinero"] = df["cantidad"] * df["PrecioUnitarioPesos"] 
+            
+            mes = []
+            agno = []
+            for i in df['FechaEnvio']:
+                separo = i.split(" ")
+                fecha_dt = datetime.strptime(separo[0], '%Y-%m-%d')
+                month = fecha_dt.strftime('%m')
+                year = fecha_dt.strftime('%Y')
+                mes.append(month)
+                agno.append(year)
+
+            df["Mes"] = mes
+            df["Agno"] = agno
+
+            columnas_finales = ["ID", "Link", "Nombre", "Tipo", "ProcedenciaOC", "EsTratoDirecto", "EsCompraAgil",
+                                "PromedioCalificacion", "CantidadEvaluacion", "RegionProveedor",
+                                "codigoProductoONU", "NombreroductoGenerico", "RubroN1", "RubroN2", "RubroN3",
+                                "DescripcionTipoOC", "cantidad", "UnidadMedida", "Estado", "FechaEnvio", "RutSucursal",
+                                "CodigoOrganismoPublico", "OrganismoPublico", "sector", "EspecificacionComprador", "EspecificacionProveedor",
+                                "RegionUnidadCompra", "Sucursal", "NombreProveedor", "PrecioUnitarioPesos", "TotalDinero", "TipoServicio", "Mes", "Agno"]
+            
+            df['EspecificacionProveedor'] = df['EspecificacionProveedor'].str.slice(0, 150)  # Limitamos los caracteres 
+            df['EspecificacionComprador'] = df['EspecificacionComprador'].str.slice(0, 150)
+
+            df.to_csv(".\\outServidor_especificaciones\\E_" + arch, sep=";", decimal=".", encoding="ISO-8859-1", quotechar='"', quoting=csv.QUOTE_ALL, index=False, columns=columnas_finales)
+
+        if NivelOC:
+            col = ["ID", "Link", "Nombre",
+                   "Tipo", "ProcedenciaOC", "EsTratoDirecto", "EsCompraAgil",
+                   "PromedioCalificacion", "CantidadEvaluacion",
+                   "DescripcionTipoOC", "Estado", "FechaEnvio", "MontoTotalOC_PesosChilenos",
+                   "CodigoOrganismoPublico", "OrganismoPublico", "sector", "ActividadComprador", "RegionUnidadCompra", "Sucursal", "NombreProveedor"]
+            df_OC = df[col].copy()
+            df_OC = df_OC.drop_duplicates()  # Esto sólo para nivel OC
+            df_OC.to_csv(".\\NivelOC\\D" + arch, sep=";", decimal=",", encoding="ISO-8859-1", quotechar='"', quoting=csv.QUOTE_ALL, index=False)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time  # Cálculo del tiempo transcurrido
+        print("Tiempo transcurrido: {:.6f} segundos".format(elapsed_time))
