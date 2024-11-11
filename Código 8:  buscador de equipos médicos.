@@ -56,9 +56,9 @@ include "header.php";
                         <?php
                         // Configuración de la base de datos
                         $servername = 'localhost';
-                        $username = 'csi84990_sigem';
-                        $password = 'N2$nsntl5k$0';
-                        $dbname = 'csi84990_BD_SIGEM_UV';
+                        $username = 'Usuario';
+                        $password = 'contraseña';
+                        $dbname = 'cbase de datos';
 
                         // Crear conexión
                         $conn = new mysqli($servername, $username, $password, $dbname);
