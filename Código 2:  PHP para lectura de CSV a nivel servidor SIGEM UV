@@ -9,7 +9,7 @@ $month = ltrim(date("m"), "0"); // Elimina el cero inicial para meses de un solo
 $archivo_guardado = "E_2024-5.csv"; // Especifica el archivo que quieres procesar
 
 // Conexión a la base de datos
-$conn = new mysqli('localhost', 'csi84990_sigem', 'N2$nsntl5k$0', 'csi84990_BD_SIGEM_UV');
+$conn = new mysqli('localhost', 'Nombre usuario', 'contraseña', 'Nombre Base de datos');
 if ($conn->connect_error) {
     die("Conexión fallida: " . $conn->connect_error);
 }
